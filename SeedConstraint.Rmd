@@ -1,0 +1,63 @@
+---
+title: "Seed banks and constraints"
+author: "Stuart E. Jones (May 27, 2014)"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+header-includes:
+   - \usepackage{array}
+output: pdf_document
+geometry: margin=2.54cm
+---
+
+# Clear workspace
+```{r}
+rm(list=ls())
+```
+
+# Create a range of (log 10) biomass turnover (per day)
+```{r}
+# numbers should come from literature
+# where biomass tunorver estimated as BP/B
+# BP = bacterial productivity (ugC/L/d)
+# B = bacterial biomass (ugC/L)
+
+biomassTurnover <- seq(-4,4,0.1)
+```
+
+# Create a range of (log 10) growth rates (per day)
+```{r}
+# Maximum: 20 minute doubling time --> r = 50 d-1
+# Minimum: 1,000 day doubling time --> r = 0.0007 d-1
+microGrowth <- seq(-3,1.7,0.1)	
+```
+
+# Function to estimate fraction of dormant individuals
+```{r}
+estFracDorm <- function(bt,mg){
+	activeTurnover = log(2) / (10^mg)
+	fractionDormant = 1 - (10^bt) / activeTurnover
+	return(fractionDormant)
+}
+```
+
+# Loop over turnover and growth rates to calculate fraction of dormant individuals 
+```{r}
+fracDorm <- matrix(NA, length(biomassTurnover), length(microGrowth))
+for(i in 1:length(biomassTurnover)){
+	for(j in 1:length(microGrowth)){
+		fracDorm[i,j] = estFracDorm(biomassTurnover[i], microGrowth[j])
+	}
+}
+
+# remove observations where fraction of dormant is less than zero
+fracDorm[fracDorm < 0] = NA
+```
+
+# Make plot
+```{r}
+filled.contour(biomassTurnover, microGrowth, fracDorm, 
+  xlab = "log10 Biomass Turnover (d^-1)", ylab= "log10 Growth
+  Rate (d^-1)", color.palette = colorRampPalette(c('purple', 
+  'blue', 'green', 'yellow', 'orange', 'red')), main = "Fraction Dormant")
+
+#abline(a=-1.6,b=-1.25,lwd=3)
+```
